@@ -1,99 +1,90 @@
 #if UNITY_EDITOR
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
-using System.Diagnostics;
+using UnityEngine.AddressableAssets;
+using UnityEditor.AddressableAssets;
+using UnityEditor.AddressableAssets.Build;
+using UnityEditor.AddressableAssets.Settings;
 using System.IO;
-using UnityEditor.Build.Reporting;
-using Debug = UnityEngine.Debug;
 
-public class MultiBuild
-{
-    //This creates a menu item to trigger the dual builds https://docs.unity3d.com/ScriptReference/MenuItem.html
+public class MultiBuild {
     [MenuItem("Game Build Menu/Dual Build")]
     public static void BuildGame() {
-        //This builds the player twice: a build with desktop-specific texture settings (WebGL_Build) as well as mobile-specific texture settings (WebGL_Mobile), and combines the necessary files into one directory (WebGL_Build)
         string dualBuildPath = "Build";
         string desktopBuildName = "WebGL_Build";
         string mobileBuildName = "WebGL_Mobile";
 
-        string desktopPath = Path.Combine(dualBuildPath, desktopBuildName);
-        string mobilePath = Path.Combine(dualBuildPath, mobileBuildName);
-        List<string> scenes = new List<string>();
-        foreach (EditorBuildSettingsScene scene in EditorBuildSettings.scenes) {
-            if (scene.enabled)
-                scenes.Add(scene.path);
-        }
+        List<string> scenes = GetEnabledScenePaths();
 
-        EditorUserBuildSettings.webGLBuildSubtarget = WebGLTextureSubtarget.DXT;
-        BuildPlayerOptions buildPlayerDesktopOption = new() {
-            scenes = scenes.ToArray(),
-            locationPathName = desktopPath,
-            target = BuildTarget.WebGL,
-            options = BuildOptions.None,
-        };
-        BuildPipeline.BuildPlayer(buildPlayerDesktopOption);
+        // 1. Build Addressables with ASTC textures
+        BuildWithAddressables(dualBuildPath, scenes, mobileBuildName, WebGLTextureSubtarget.ASTC);
 
+        // 2. Build Player with ASTC textures
+        BuildPlayer(dualBuildPath, scenes, mobileBuildName, WebGLTextureSubtarget.ASTC);
 
-        EditorUserBuildSettings.webGLBuildSubtarget = WebGLTextureSubtarget.ASTC;
-        BuildPlayerOptions buildPlayerOptions = new() {
-            scenes = scenes.ToArray(),
-            locationPathName = mobilePath,
-            target = BuildTarget.WebGL,
-            options = BuildOptions.None,
-        };
-        BuildPipeline.BuildPlayer(buildPlayerOptions);
+        // 3. Build Addressables with DXT textures
+        BuildWithAddressables(dualBuildPath, scenes, desktopBuildName, WebGLTextureSubtarget.DXT);
 
-        // Copy the mobile.data file to the desktop build directory to consolidate them both
-        string mobileDataSourcePath = Path.Combine(mobilePath, "Build", mobileBuildName + ".data.unityweb");
-        string desktopDataDestPath = Path.Combine(desktopPath, "Build", mobileBuildName + ".data.unityweb");
-
-        // Copy the mobile.data file
-        FileUtil.CopyFileOrDirectory(mobileDataSourcePath, desktopDataDestPath);
+        // 4. Build Player with DXT textures
+        BuildPlayer(dualBuildPath, scenes, desktopBuildName, WebGLTextureSubtarget.DXT);
     }
 
     [MenuItem("Game Build Menu/Dual Clean")]
     public static void BuildAndRunGame() {
-        //This builds the player twice: a build with desktop-specific texture settings (WebGL_Build) as well as mobile-specific texture settings (WebGL_Mobile), and combines the necessary files into one directory (WebGL_Build)
         string dualBuildPath = "Build";
         string desktopBuildName = "WebGL_Build";
         string mobileBuildName = "WebGL_Mobile";
 
-        string desktopPath = Path.Combine(dualBuildPath, desktopBuildName);
-        string mobilePath = Path.Combine(dualBuildPath, mobileBuildName);
+        List<string> scenes = GetEnabledScenePaths();
+
+        // 1. Clean build with Addressables and ASTC textures
+        BuildWithAddressables(dualBuildPath, scenes, mobileBuildName, WebGLTextureSubtarget.ASTC);
+
+        // 2. Clean build with Player and ASTC textures
+        BuildPlayer(dualBuildPath, scenes, mobileBuildName, WebGLTextureSubtarget.ASTC);
+
+        // 3. Clean build with Addressables and DXT textures
+        BuildWithAddressables(dualBuildPath, scenes, desktopBuildName, WebGLTextureSubtarget.DXT);
+
+        // 4. Clean build with Player and DXT textures
+        BuildPlayer(dualBuildPath, scenes, desktopBuildName, WebGLTextureSubtarget.DXT);
+    }
+
+    private static List<string> GetEnabledScenePaths() {
         List<string> scenes = new List<string>();
         foreach (EditorBuildSettingsScene scene in EditorBuildSettings.scenes) {
             if (scene.enabled)
                 scenes.Add(scene.path);
         }
+        return scenes;
+    }
+
+    private static void BuildWithAddressables(string outputPath, List<string> scenes, string buildName, WebGLTextureSubtarget subtarget) {
+        EditorUserBuildSettings.webGLBuildSubtarget = subtarget;
+
+        AddressableAssetSettings.CleanPlayerContent(AddressableAssetSettingsDefaultObject.Settings.ActivePlayerDataBuilder);
+
+        // Build the Addressables
+        AddressableAssetSettings.BuildPlayerContent();
+
+        // Get the path after building Addressables
+        string addressablesBuildPath = AddressableAssetSettingsDefaultObject.Settings.buildSettings.bundleBuildPath;
+        Debug.Log("Addressables build path: " + addressablesBuildPath);
+    }
 
 
-        EditorUserBuildSettings.webGLBuildSubtarget = WebGLTextureSubtarget.DXT;
-        BuildPlayerOptions buildPlayerDesktopOption = new() {
+    private static void BuildPlayer(string outputPath, List<string> scenes, string buildName, WebGLTextureSubtarget subtarget) {
+        EditorUserBuildSettings.webGLBuildSubtarget = subtarget;
+
+        BuildPlayerOptions buildPlayerOptions = new BuildPlayerOptions {
             scenes = scenes.ToArray(),
-            locationPathName = desktopPath,
+            locationPathName = Path.Combine(outputPath, buildName),
             target = BuildTarget.WebGL,
-            options = BuildOptions.CleanBuildCache | BuildOptions.AutoRunPlayer,
+            options = BuildOptions.None,
         };
-        BuildPipeline.BuildPlayer(buildPlayerDesktopOption);
 
-        
-        EditorUserBuildSettings.webGLBuildSubtarget = WebGLTextureSubtarget.ASTC;
-        BuildPlayerOptions buildPlayerOptions = new() {
-            scenes = scenes.ToArray(),
-            locationPathName = mobilePath,
-            target = BuildTarget.WebGL,
-            options = BuildOptions.CleanBuildCache | BuildOptions.AutoRunPlayer,
-        };
         BuildPipeline.BuildPlayer(buildPlayerOptions);
-
-        // Copy the mobile.data file to the desktop build directory to consolidate them both
-        string mobileDataSourcePath = Path.Combine(mobilePath, "Build", mobileBuildName + ".data.unityweb");
-        string desktopDataDestPath = Path.Combine(desktopPath, "Build", mobileBuildName + ".data.unityweb");
-
-        // Copy the mobile.data file
-        FileUtil.CopyFileOrDirectory(mobileDataSourcePath, desktopDataDestPath);
     }
 }
 #endif

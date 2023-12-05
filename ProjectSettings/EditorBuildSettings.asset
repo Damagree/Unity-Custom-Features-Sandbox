@@ -8,4 +8,5 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Store/Templates/Samples/Starter Assets/0.1.0/Controllers Sample/ThirdPersonController/Playground.unity
     guid: e9017d5f96b9f09489b4b37e1d6eb914
-  m_configObjects: {}
+  m_configObjects:
+    com.unity.addressableassets: {fileID: 11400000, guid: 4a60536ddbcf783458c5ba78c9456ce0, type: 2}
