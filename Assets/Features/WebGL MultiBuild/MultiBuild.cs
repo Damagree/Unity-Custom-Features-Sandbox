@@ -9,7 +9,7 @@ using UnityEditor.AddressableAssets.Settings;
 using System.IO;
 
 public class MultiBuild {
-    [MenuItem("Game Build Menu/Dual Build")]
+    [MenuItem("PDKT Build/Dual Build")]
     public static void BuildGame() {
         string dualBuildPath = "Build";
         string desktopBuildName = "WebGL_Build";

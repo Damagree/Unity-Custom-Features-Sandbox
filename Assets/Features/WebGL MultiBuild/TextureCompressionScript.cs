@@ -4,11 +4,12 @@ using UnityEngine;
 using UnityEditor.AddressableAssets.Settings;
 using UnityEditor.AddressableAssets;
 using System.Collections.Generic;
+using System.IO;
 
 public class TextureCompressionScript : MonoBehaviour {
     private static AddressableAssetSettings settings;
 
-    [MenuItem("Custom/Build Addressables with DXT and ASTC")]
+    [MenuItem("PDKT Build/Build Addressables with DXT and ASTC")]
     public static void BuildAddressablesWithDifferentCompression() {
         settings = AddressableAssetSettingsDefaultObject.Settings;
 
@@ -20,7 +21,23 @@ public class TextureCompressionScript : MonoBehaviour {
             ProcessGroupEntries(group);
         }
 
+        AddLabel();
+
+        // Build Addressables
         AddressableAssetSettings.BuildPlayerContent();
+
+    }
+
+    private static void AddLabel() {
+        // Add label to all entries in group Mobile and Desktop
+        AddressableAssetGroup desktopGroup = settings.FindGroup("Desktop");
+        AddressableAssetGroup mobileGroup = settings.FindGroup("Mobile");
+
+        foreach (AddressableAssetEntry entry in desktopGroup.entries)
+            entry.SetLabel("Desktop", true, true);
+
+        foreach (AddressableAssetEntry entry in mobileGroup.entries)
+            entry.SetLabel("Mobile", true, true);
     }
 
     private static void ProcessGroupEntries(AddressableAssetGroup sourceGroup) {
