@@ -20,22 +20,26 @@ MonoBehaviour:
   - m_GUID: 1db87d94e4dec4747bf550fce6f3f30c
     m_Address: Moon_DXT
     m_ReadOnly: 0
-    m_SerializedLabels: []
+    m_SerializedLabels:
+    - Desktop
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 8855bf670ba5d3646a7be9a9e118cbe0
     m_Address: Moon_DXT
     m_ReadOnly: 0
-    m_SerializedLabels: []
+    m_SerializedLabels:
+    - Desktop
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 807f1fabad375904dbf9626ccc872952
     m_Address: Assets/Features/Addressables/Games/Materials/Another Materials_DXT.mat
     m_ReadOnly: 0
-    m_SerializedLabels: []
+    m_SerializedLabels:
+    - Desktop
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: c1dc232473abc22448ab5004e90ee99f
     m_Address: Assets/Features/Addressables/Games/Prefabs/Sun_DXT.prefab
     m_ReadOnly: 0
-    m_SerializedLabels: []
+    m_SerializedLabels:
+    - Desktop
     FlaggedDuringContentUpdateRestriction: 0
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: c8f0f52046408a147953369d4a8d0d49, type: 2}

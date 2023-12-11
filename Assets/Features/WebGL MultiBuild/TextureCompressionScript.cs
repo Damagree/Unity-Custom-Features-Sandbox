@@ -186,7 +186,7 @@ public class TextureCompressionScript : MonoBehaviour {
         return AssetDatabase.LoadAssetAtPath<T>(assetPath);
     }
 
-    private static string DuplicateAndCompressTexture(string texturePath, string suffix, TextureImporterFormat format) {
+    internal static string DuplicateAndCompressTexture(string texturePath, string suffix, TextureImporterFormat format) {
         string newPath = "";
 
         // Check if texture with the same suffix already exists
