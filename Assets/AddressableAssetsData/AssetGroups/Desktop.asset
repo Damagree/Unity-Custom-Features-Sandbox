@@ -17,29 +17,25 @@ MonoBehaviour:
     m_SerializedData: []
   m_GUID: 732522118ddae4c4ab56813baf470dba
   m_SerializeEntries:
-  - m_GUID: 1db87d94e4dec4747bf550fce6f3f30c
-    m_Address: Moon_DXT
+  - m_GUID: 26ae53dfa6b21714ba326bbf0339e560
+    m_Address: Assets/Features/Addressables/Games/Prefabs/Moon_DXT.prefab
     m_ReadOnly: 0
     m_SerializedLabels:
     - Desktop
+    - default
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 8855bf670ba5d3646a7be9a9e118cbe0
-    m_Address: Moon_DXT
-    m_ReadOnly: 0
-    m_SerializedLabels:
-    - Desktop
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 807f1fabad375904dbf9626ccc872952
-    m_Address: Assets/Features/Addressables/Games/Materials/Another Materials_DXT.mat
-    m_ReadOnly: 0
-    m_SerializedLabels:
-    - Desktop
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: c1dc232473abc22448ab5004e90ee99f
+  - m_GUID: dbfbcf07a8ced094284c01a9a5bca1ec
     m_Address: Assets/Features/Addressables/Games/Prefabs/Sun_DXT.prefab
     m_ReadOnly: 0
     m_SerializedLabels:
     - Desktop
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 28f72c0ba1b5c30429e93a4b18c4105a
+    m_Address: Assets/Features/WebGL MultiBuild/Game/Cube_DXT.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Desktop
+    - Multi Compression
     FlaggedDuringContentUpdateRestriction: 0
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: c8f0f52046408a147953369d4a8d0d49, type: 2}

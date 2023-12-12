@@ -20,12 +20,19 @@ MonoBehaviour:
   - m_GUID: 4b172642a23ae474f87b939fbae8ce54
     m_Address: Moon
     m_ReadOnly: 0
-    m_SerializedLabels: []
+    m_SerializedLabels:
+    - default
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 25b2d17d03fed8d4a8d8f495eca16c25
-    m_Address: Assets/Features/Addressables/Games/Prefabs/Sun.prefab
+    m_Address: Sun
     m_ReadOnly: 0
     m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ad790f56623c4884cbbaea842d20beec
+    m_Address: Cube
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Multi Compression
     FlaggedDuringContentUpdateRestriction: 0
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: c8f0f52046408a147953369d4a8d0d49, type: 2}

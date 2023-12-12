@@ -5,11 +5,12 @@ using UnityEditor.AddressableAssets.Settings;
 using UnityEditor.AddressableAssets;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 
 public class TextureCompressionScript : MonoBehaviour {
     private static AddressableAssetSettings settings;
 
-    [MenuItem("PDKT Build/Build Addressables with DXT and ASTC")]
+    [MenuItem("PDKT Build/Addressable/Build Addressables with DXT and ASTC")]
     public static void BuildAddressablesWithDifferentCompression() {
         settings = AddressableAssetSettingsDefaultObject.Settings;
 
@@ -24,7 +25,7 @@ public class TextureCompressionScript : MonoBehaviour {
         AddLabel();
 
         // Build Addressables
-        AddressableAssetSettings.BuildPlayerContent();
+        //AddressableAssetSettings.BuildPlayerContent();
 
     }
 
@@ -33,11 +34,47 @@ public class TextureCompressionScript : MonoBehaviour {
         AddressableAssetGroup desktopGroup = settings.FindGroup("Desktop");
         AddressableAssetGroup mobileGroup = settings.FindGroup("Mobile");
 
-        foreach (AddressableAssetEntry entry in desktopGroup.entries)
-            entry.SetLabel("Desktop", true, true);
+        foreach (AddressableAssetEntry entry in desktopGroup.entries) {
+            // get the name of the original prefab, without _DXT or _ASTC
+            string originalPrefabName = entry.address.Replace("_DXT", "").Replace("_ASTC", "");
 
-        foreach (AddressableAssetEntry entry in mobileGroup.entries)
-            entry.SetLabel("Mobile", true, true);
+            // check if the original prefab has another label
+            AddressableAssetEntry originalPrefabEntry = settings.FindAssetEntry(AssetDatabase.AssetPathToGUID(originalPrefabName));
+
+            // if the original prefab has another label, add it to the new prefab
+            if (originalPrefabEntry != null) {
+                string[] labels = originalPrefabEntry.labels.ToArray();
+                foreach (var label in labels) {
+                    entry.SetLabel(label, true, true);
+                }
+            }
+
+            // Add additional label based on group
+            if (desktopGroup.Name.Equals("Desktop") || desktopGroup.Name.Equals("Mobile")) {
+                entry.SetLabel(desktopGroup.Name, true, true);
+            }
+        }
+
+        foreach (AddressableAssetEntry entry in mobileGroup.entries) {
+            // get the name of the original prefab, without _DXT or _ASTC
+            string originalPrefabName = entry.address.Replace("_DXT", "").Replace("_ASTC", "");
+
+            // check if the original prefab has another label
+            AddressableAssetEntry originalPrefabEntry = settings.FindAssetEntry(AssetDatabase.AssetPathToGUID(originalPrefabName));
+
+            // if the original prefab has another label, add it to the new prefab
+            if (originalPrefabEntry != null) {
+                string[] labels = originalPrefabEntry.labels.ToArray();
+                foreach (var label in labels) {
+                    entry.SetLabel(label, true, true);
+                }
+            }
+
+            // Add additional label based on group
+            if (desktopGroup.Name.Equals("Desktop") || desktopGroup.Name.Equals("Mobile")) {
+                entry.SetLabel(mobileGroup.Name, true, true);
+            }
+        }
     }
 
     private static void ProcessGroupEntries(AddressableAssetGroup sourceGroup) {
@@ -84,8 +121,6 @@ public class TextureCompressionScript : MonoBehaviour {
                 continue;
             }
 
-            List<string> processedTexturePaths = new List<string>();
-
             var textures = material.GetTexturePropertyNames();
 
             foreach (var textureName in textures) {
@@ -99,11 +134,21 @@ public class TextureCompressionScript : MonoBehaviour {
                     string newMaterialPathASTC = AssetDatabase.GetAssetPath(material).Replace(".mat", "_ASTC.mat");
 
                     // Process DXT
-                    string newTexturePathDXT = DuplicateAndCompressTexture(AssetDatabase.GetAssetPath(texture), "DXT", TextureImporterFormat.DXT5);
+                    string newTexturePathDXT;
+                    if (textureName.Contains("_BumpMap")) {
+                        newTexturePathDXT = DuplicateAndCompressTexture(AssetDatabase.GetAssetPath(texture), "DXT", TextureImporterFormat.DXT5, true);
+                    } else {
+                        newTexturePathDXT = DuplicateAndCompressTexture(AssetDatabase.GetAssetPath(texture), "DXT", TextureImporterFormat.DXT5, false);
+                    }
                     DuplicateAndUpdateMaterial(prefabPath, material, AssetDatabase.GetAssetPath(texture), textureName, newPrefabPathDXT, newMaterialPathDXT, newTexturePathDXT, desktopGroup);
 
                     // Process ASTC
-                    string newTexturePathASTC = DuplicateAndCompressTexture(AssetDatabase.GetAssetPath(texture), "ASTC", TextureImporterFormat.ASTC_4x4);
+                    string newTexturePathASTC;
+                    if (textureName.Contains("_BumpMap")) {
+                        newTexturePathASTC = DuplicateAndCompressTexture(AssetDatabase.GetAssetPath(texture), "ASTC", TextureImporterFormat.ASTC_4x4, true);
+                    } else {
+                        newTexturePathASTC = DuplicateAndCompressTexture(AssetDatabase.GetAssetPath(texture), "ASTC", TextureImporterFormat.ASTC_4x4, false);
+                    }
                     DuplicateAndUpdateMaterial(prefabPath, material, AssetDatabase.GetAssetPath(texture), textureName, newPrefabPathASTC, newMaterialPathASTC, newTexturePathASTC, mobileGroup);
                 }
             }
@@ -112,9 +157,8 @@ public class TextureCompressionScript : MonoBehaviour {
 
     private static void DuplicateAndUpdateMaterial(string prefabPath, Material originalMaterial, string originalTexturePath, string textureName,
     string newPrefabPath, string newMaterialPath, string newTexturePath, AddressableAssetGroup group) {
-        List<AddressableAssetEntry> entries = new List<AddressableAssetEntry>(group.entries);
-
         // Check if material with the same name already exists
+        List<AddressableAssetEntry> entries = new List<AddressableAssetEntry>(group.entries);
         string existingMaterialGUID = entries.Find(entry => entry.address.EndsWith(newMaterialPath))?.guid;
 
         Material newMaterial = existingMaterialGUID != null ?
@@ -133,47 +177,56 @@ public class TextureCompressionScript : MonoBehaviour {
         if (newTexturePath.Contains("ASTC") || newTexturePath.Contains("DXT")) {
             newTexturePathDXT = newTexturePath;
         } else {
-            newTexturePathDXT = DuplicateAndCompressTexture(newTexturePath, "DXT", TextureImporterFormat.DXT5);
+            if (textureName.Contains("_BumpMap")) {
+                newTexturePathDXT = DuplicateAndCompressTexture(newTexturePath, "DXT", TextureImporterFormat.DXT5, true);
+            } else {
+                newTexturePathDXT = DuplicateAndCompressTexture(newTexturePath, "DXT", TextureImporterFormat.DXT5, false);
+            }
         }
 
         try {
-            // check if the texture is used in another texture property of original material
-            var textures = originalMaterial.GetTexturePropertyNames();
-            List<string> textureNames = new List<string>();
-            foreach (var texName in textures) {
-                Texture tex = originalMaterial.GetTexture(texName);
-                if (tex != null && AssetDatabase.GetAssetPath(tex) == originalTexturePath) {
-                    newMaterial.SetTexture(texName, AssetDatabase.LoadAssetAtPath<Texture>(newTexturePathDXT));
+            // Check if prefab with the same name already exists
+            string existingPrefabGUID = entries.Find(entry => entry.address.EndsWith(newPrefabPath))?.guid;
+
+            GameObject newPrefab = existingPrefabGUID != null ?
+                AssetDatabase.LoadAssetAtPath<GameObject>(AssetDatabase.GUIDToAssetPath(existingPrefabGUID)) :
+                GetOrCreateAsset<GameObject>(newPrefabPath, prefabPath);
+
+            if (newPrefab == null) {
+                Debug.LogError("Failed to create or load prefab: " + newPrefabPath);
+                return;
+            }
+
+            Renderer newRenderer = newPrefab.GetComponentInChildren<Renderer>();
+            newRenderer.sharedMaterial = newMaterial;
+
+            // Move or create prefab entry if it doesn't exist
+            if (existingPrefabGUID == null) {
+                string newPrefabGUID = AssetDatabase.AssetPathToGUID(newPrefabPath);
+
+                AddressableAssetEntry prefabEntry = settings.FindAssetEntry(newPrefabGUID);
+                if (prefabEntry == null) {
+                    prefabEntry = settings.CreateOrMoveEntry(newPrefabGUID, group);
+                }
+
+                // Add labels from the original prefab to the new prefab entry
+                GUID originalPrefabGUID = new GUID(AssetDatabase.AssetPathToGUID(prefabPath));
+                string[] prefabLabels = AssetDatabase.GetLabels(originalPrefabGUID);
+                foreach (var label in prefabLabels) {
+                    prefabEntry.SetLabel(label, true, true);
+                }
+
+                // Add additional label based on group
+                if (group.Name.Equals("Desktop") || group.Name.Equals("Mobile")) {
+                    prefabEntry.SetLabel(group.Name, true, true);
                 }
             }
-            
+
         } catch (System.Exception e) {
-            Debug.LogError($"Failed to set texture: {e}");
+            Debug.LogError($"Failed to set texture or labels: {e}");
         }
-
-        // Check if prefab with the same name already exists
-        string existingPrefabGUID = entries.Find(entry => entry.address.EndsWith(newPrefabPath))?.guid;
-
-        GameObject newPrefab = existingPrefabGUID != null ?
-            AssetDatabase.LoadAssetAtPath<GameObject>(AssetDatabase.GUIDToAssetPath(existingPrefabGUID)) :
-            GetOrCreateAsset<GameObject>(newPrefabPath, prefabPath);
-
-        if (newPrefab == null) {
-            Debug.LogError("Failed to create or load prefab: " + newPrefabPath);
-            return;
-        }
-
-        Renderer newRenderer = newPrefab.GetComponentInChildren<Renderer>();
-        newRenderer.sharedMaterial = newMaterial;
-
-        // Move or create material entry if it doesn't exist
-        if (existingMaterialGUID == null)
-            settings.CreateOrMoveEntry(AssetDatabase.AssetPathToGUID(newMaterialPath), group);
-
-        // Move or create prefab entry if it doesn't exist
-        if (existingPrefabGUID == null)
-            settings.CreateOrMoveEntry(AssetDatabase.AssetPathToGUID(newPrefabPath), group);
     }
+
 
 
     private static T GetOrCreateAsset<T>(string assetPath, string originalAssetPath) where T : Object {
@@ -186,7 +239,7 @@ public class TextureCompressionScript : MonoBehaviour {
         return AssetDatabase.LoadAssetAtPath<T>(assetPath);
     }
 
-    internal static string DuplicateAndCompressTexture(string texturePath, string suffix, TextureImporterFormat format) {
+    internal static string DuplicateAndCompressTexture(string texturePath, string suffix, TextureImporterFormat format, bool isNormalMap = false) {
         string newPath = "";
 
         // Check if texture with the same suffix already exists
@@ -205,7 +258,11 @@ public class TextureCompressionScript : MonoBehaviour {
 
         TextureImporter importer = AssetImporter.GetAtPath(newPath) as TextureImporter;
 
-        importer.textureType = TextureImporterType.Default;
+        if (isNormalMap) {
+            importer.textureType = TextureImporterType.NormalMap;
+        } else {
+            importer.textureType = TextureImporterType.Default;
+        }
         importer.textureCompression = TextureImporterCompression.Compressed;
         var platformSettings = importer.GetPlatformTextureSettings("WebGL");
         platformSettings.overridden = true;

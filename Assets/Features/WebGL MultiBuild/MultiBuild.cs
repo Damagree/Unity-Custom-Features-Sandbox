@@ -9,7 +9,7 @@ using UnityEditor.AddressableAssets.Settings;
 using System.IO;
 
 public class MultiBuild {
-    [MenuItem("PDKT Build/Dual Build")]
+    [MenuItem("PDKT Build/Player/Dual Build")]
     public static void BuildGame() {
         string dualBuildPath = "Build";
         string desktopBuildName = "WebGL_Build";
@@ -30,7 +30,7 @@ public class MultiBuild {
         BuildPlayer(dualBuildPath, scenes, desktopBuildName, WebGLTextureSubtarget.DXT);
     }
 
-    [MenuItem("Game Build Menu/Dual Clean")]
+    [MenuItem("PDKT Build/Player/Dual Clean")]
     public static void BuildAndRunGame() {
         string dualBuildPath = "Build";
         string desktopBuildName = "WebGL_Build";
