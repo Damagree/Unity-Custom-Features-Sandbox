@@ -30,13 +30,6 @@ MonoBehaviour:
     m_SerializedLabels:
     - Desktop
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 28f72c0ba1b5c30429e93a4b18c4105a
-    m_Address: Assets/Features/WebGL MultiBuild/Game/Cube_DXT.prefab
-    m_ReadOnly: 0
-    m_SerializedLabels:
-    - Desktop
-    - Multi Compression
-    FlaggedDuringContentUpdateRestriction: 0
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: c8f0f52046408a147953369d4a8d0d49, type: 2}
   m_SchemaSet:

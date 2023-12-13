@@ -70,31 +70,34 @@ public class SceneDuplicationScript {
     }
 
     private static void CheckSceneAssets(Scene scene, TextureFormat textureFormat, string suffix) {
-        // Iterate through all game objects in the scene
-        GameObject[] rootObjects = scene.GetRootGameObjects();
+        // Find all renderers in the scene
+        Renderer[] rootRenderers = GameObject.FindObjectsOfType<Renderer>(true);
 
-        foreach (GameObject rootObject in rootObjects) {
-            // Check if the game object has a Renderer component
-            Renderer renderer = rootObject.GetComponent<Renderer>();
+        foreach (Renderer rootRenderer in rootRenderers) {
+            // Process materials, textures, or any other assets in the GameObject and its descendants
+            ProcessAssetsInRendererAndDescendants(rootRenderer, textureFormat, suffix);
+        }
+    }
 
-            if (renderer != null) {
-                // Duplicate the game object
-                GameObject duplicatedObject = GameObject.Instantiate(rootObject, rootObject.transform.position, rootObject.transform.rotation);
+    private static void ProcessAssetsInRendererAndDescendants(Renderer renderer, TextureFormat textureFormat, string suffix) {
+        // Process materials, textures, or any other assets as needed
+        ProcessMaterials(renderer, renderer.sharedMaterials, textureFormat, suffix);
 
-                // Copy the scale from the original to the duplicated object
-                duplicatedObject.transform.localScale = rootObject.transform.localScale;
+        // Check if the game object has any children
+        if (renderer.transform.childCount > 0) {
+            // Iterate through all children of the game object
+            foreach (Transform child in renderer.transform) {
+                Renderer childRenderer = child.GetComponent<Renderer>();
 
-                // Rename the duplicated object
-                duplicatedObject.name = rootObject.name + suffix;
-
-                // Process materials, textures, or any other assets in the duplicated object
-                ProcessAssetsInGameObject(duplicatedObject, textureFormat, suffix);
-
-                // Delete the original object
-                GameObject.DestroyImmediate(rootObject);
+                if (childRenderer != null) {
+                    // Recursively process materials, textures, or any other assets in the child Renderer and its descendants
+                    ProcessAssetsInRendererAndDescendants(childRenderer, textureFormat, suffix);
+                }
             }
         }
     }
+
+
 
     private static void ProcessAssetsInGameObject(GameObject gameObject, TextureFormat textureFormat, string suffix) {
         // Iterate through all components of the GameObject
@@ -114,44 +117,43 @@ public class SceneDuplicationScript {
     }
 
     private static void ProcessMaterials(Renderer renderer, Material[] materials, TextureFormat textureFormat, string suffix) {
+        List<Material> duplicatedMaterials = new List<Material>();
+
         foreach (Material originalMaterial in materials) {
             if (originalMaterial != null) {
-                // Duplicate the material with a new name
                 Material duplicatedMaterial = DuplicateMaterial(originalMaterial, textureFormat, suffix);
+                duplicatedMaterials.Add(duplicatedMaterial);
 
-                // Process textures in the material
                 var textures = duplicatedMaterial.GetTexturePropertyNames();
 
                 foreach (var textureName in textures) {
                     Texture texture = duplicatedMaterial.GetTexture(textureName);
 
-                    // if the textureNamer is normal map, we need to set the texture type to normal map
                     string newTexturePath;
                     if (textureName.Contains("_BumpMap")) {
                         newTexturePath = ProcessTextureEntry(texture, textureFormat, suffix, isNormalMap: true);
-
                     } else {
                         newTexturePath = ProcessTextureEntry(texture, textureFormat, suffix, isNormalMap: false);
                     }
-
-                    // Process the texture using the logic from the TextureCompressionScript
 
                     if (string.IsNullOrEmpty(newTexturePath)) {
                         continue;
                     }
 
-                    // Set the new texture path to the material
-                    duplicatedMaterial.SetTexture(textureName, AssetDatabase.LoadAssetAtPath<Texture>(newTexturePath));
+                    var newTexture = AssetDatabase.LoadAssetAtPath<Texture>(newTexturePath);
+                    duplicatedMaterial.SetTexture(textureName, newTexture);
                 }
-
-                // Assign the duplicated material to the renderer
-                renderer.sharedMaterial = duplicatedMaterial;
             }
         }
+
+        // Assign the duplicated materials to the renderer
+        renderer.sharedMaterials = duplicatedMaterials.ToArray();
     }
 
+
+
     private static Material DuplicateMaterial(Material originalMaterial, TextureFormat textureFormat, string suffix) {
-        // check if original material are contain suffix
+        // check if original material contains suffix
         if (originalMaterial.name.Contains(suffix)) {
             return originalMaterial;
         }
@@ -161,7 +163,7 @@ public class SceneDuplicationScript {
 
         // Check if material with the same name already exists
         Material existingMaterial = AssetDatabase.LoadAssetAtPath<Material>(Path.Combine("Assets", newMaterialName + ".mat"));
-        
+
         // If the material with the same name already exists, update the existing material
         if (existingMaterial != null && existingMaterial.name.Equals(newMaterialName)) {
             // Update the existing material
@@ -199,49 +201,55 @@ public class SceneDuplicationScript {
             return null;
         }
 
-        TextureImporterFormat format = TextureImporterFormat.DXT5;
+        TextureImporterFormat format = textureFormat == TextureFormat.ASTC_8x8
+            ? TextureImporterFormat.ASTC_8x8
+            : TextureImporterFormat.DXT5;
 
-        if (textureFormat == TextureFormat.ASTC_8x8) {
-            format = TextureImporterFormat.ASTC_8x8;
-        }
+        string texturePath = AssetDatabase.GetAssetPath(texture);
 
-        var texturePath = AssetDatabase.GetAssetPath(texture);
         if (string.IsNullOrEmpty(texturePath)) {
             Debug.LogError("Invalid texture path");
             return null;
         }
 
-        // Use suffix provided for naming
-        string newPath = texturePath.Replace(Path.GetExtension(texturePath), suffix + Path.GetExtension(texturePath));
-
-        // Check if texture with the same suffix already exists
-        if (texturePath.Contains(suffix))
+        // Check if the texture already contains the suffix
+        if (texturePath.Contains(suffix)) {
             return texturePath;
+        }
 
-        // Check if texture with the same suffix and format already exists
-        var existingTextureGUIDs = AssetDatabase.FindAssets(newPath);
+        // Use suffix provided for naming
+        string extension = Path.GetExtension(texturePath);
+        string newPath = texturePath.Replace(extension, suffix + extension);
 
-        if (existingTextureGUIDs.Length > 0)
+        // Check if the texture with the same suffix already exists
+        if (AssetDatabase.LoadAssetAtPath<Texture>(newPath) != null) {
             return newPath;
+        }
 
         AssetDatabase.CopyAsset(texturePath, newPath);
 
         TextureImporter importer = AssetImporter.GetAtPath(newPath) as TextureImporter;
 
-        if(isNormalMap) {
-            importer.textureType = TextureImporterType.NormalMap;
+        if (importer != null) {
+            if (isNormalMap) {
+                importer.textureType = TextureImporterType.NormalMap;
+            } else {
+                importer.textureType = TextureImporterType.Default;
+            }
+
+            importer.textureCompression = TextureImporterCompression.Compressed;
+            var platformSettings = importer.GetPlatformTextureSettings("WebGL");
+            platformSettings.overridden = true;
+            platformSettings.maxTextureSize = 1024;
+            platformSettings.format = format;
+            importer.SetPlatformTextureSettings(platformSettings);
+            importer.SaveAndReimport();
         } else {
-            importer.textureType = TextureImporterType.Default;
+            Debug.LogError($"Failed to get TextureImporter for texture: {newPath}");
         }
-        importer.textureCompression = TextureImporterCompression.Compressed;
-        var platformSettings = importer.GetPlatformTextureSettings("WebGL");
-        platformSettings.overridden = true;
-        platformSettings.maxTextureSize = 1024;
-        platformSettings.format = format;
-        importer.SetPlatformTextureSettings(platformSettings);
-        importer.SaveAndReimport();
 
         return newPath;
     }
+
 }
 #endif

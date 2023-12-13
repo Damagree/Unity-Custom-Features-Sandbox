@@ -30,13 +30,6 @@ MonoBehaviour:
     m_SerializedLabels:
     - Mobile
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 520fd2352386cfb4d933df7cd965a880
-    m_Address: Assets/Features/WebGL MultiBuild/Game/Cube_ASTC.prefab
-    m_ReadOnly: 0
-    m_SerializedLabels:
-    - Mobile
-    - Multi Compression
-    FlaggedDuringContentUpdateRestriction: 0
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: c8f0f52046408a147953369d4a8d0d49, type: 2}
   m_SchemaSet:

@@ -28,12 +28,6 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: ad790f56623c4884cbbaea842d20beec
-    m_Address: Cube
-    m_ReadOnly: 0
-    m_SerializedLabels:
-    - Multi Compression
-    FlaggedDuringContentUpdateRestriction: 0
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: c8f0f52046408a147953369d4a8d0d49, type: 2}
   m_SchemaSet:
