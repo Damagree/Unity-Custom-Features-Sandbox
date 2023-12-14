@@ -133,6 +133,7 @@ GameObject:
   m_Component:
   - component: {fileID: 49321056}
   - component: {fileID: 49321055}
+  - component: {fileID: 49321057}
   m_Layer: 0
   m_Name: Directional Light
   m_TagString: Untagged
@@ -217,6 +218,29 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 50, y: -30, z: 0}
+--- !u!114 &49321057
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 49321054}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 474bcb49853aa07438625e644c072ee6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Version: 3
+  m_UsePipelineSettings: 1
+  m_AdditionalLightsShadowResolutionTier: 2
+  m_LightLayerMask: 1
+  m_RenderingLayers: 1
+  m_CustomShadowLayers: 0
+  m_ShadowLayerMask: 1
+  m_ShadowRenderingLayers: 1
+  m_LightCookieSize: {x: 1, y: 1}
+  m_LightCookieOffset: {x: 0, y: 0}
+  m_SoftShadowQuality: 0
 --- !u!1 &326079189
 GameObject:
   m_ObjectHideFlags: 0
@@ -229,6 +253,7 @@ GameObject:
   - component: {fileID: 326079192}
   - component: {fileID: 326079191}
   - component: {fileID: 326079190}
+  - component: {fileID: 326079194}
   m_Layer: 0
   m_Name: Plane
   m_TagString: Untagged
@@ -323,6 +348,21 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &326079194
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 326079189}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5c51d77314346ec48b2c823d767321a7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  loadOnStart: 1
+  url: https://i.imgur.com/vbrDr0a.jpg
+  targetRenderer: {fileID: 326079191}
 --- !u!1 &941061255
 GameObject:
   m_ObjectHideFlags: 0
@@ -335,6 +375,7 @@ GameObject:
   - component: {fileID: 941061258}
   - component: {fileID: 941061257}
   - component: {fileID: 941061256}
+  - component: {fileID: 941061260}
   m_Layer: 0
   m_Name: Sphere
   m_TagString: Untagged
@@ -428,6 +469,65 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &941061260
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 941061255}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5c51d77314346ec48b2c823d767321a7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  loadOnStart: 1
+  url: https://i.imgur.com/yKCmx1G.jpg
+  targetRenderer: {fileID: 941061257}
+--- !u!1 &1022840956
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1022840958}
+  - component: {fileID: 1022840957}
+  m_Layer: 0
+  m_Name: Text Debug
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1022840957
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1022840956}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3969b8111da1c90429d44360bfaa1f32, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!4 &1022840958
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1022840956}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 293.4648, y: 330.76443, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1237258772
 GameObject:
   m_ObjectHideFlags: 0
@@ -440,6 +540,7 @@ GameObject:
   - component: {fileID: 1237258775}
   - component: {fileID: 1237258774}
   - component: {fileID: 1237258773}
+  - component: {fileID: 1237258777}
   m_Layer: 0
   m_Name: Cube
   m_TagString: Untagged
@@ -533,6 +634,21 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1237258777
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1237258772}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5c51d77314346ec48b2c823d767321a7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  loadOnStart: 1
+  url: https://i.imgur.com/yvhkCDc.jpg
+  targetRenderer: {fileID: 1237258774}
 --- !u!1 &1444950582
 GameObject:
   m_ObjectHideFlags: 0
@@ -618,8 +734,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1444950582}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.08943869, y: -0.77298063, z: 0.111840054, w: 0.61805624}
-  m_LocalPosition: {x: 3.962678, y: 1.9950851, z: 0.82975286}
+  m_LocalRotation: {x: 0.08522983, y: -0.82275265, z: 0.12812638, w: 0.54717225}
+  m_LocalPosition: {x: 2.9241834, y: 1.7138221, z: 1.7557442}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -634,3 +750,4 @@ SceneRoots:
   - {fileID: 1237258776}
   - {fileID: 941061259}
   - {fileID: 326079193}
+  - {fileID: 1022840958}

@@ -5,18 +5,27 @@ using UnityEngine.SceneManagement;
 using System.Collections.Generic;
 using System.IO;
 using UnityEditor.SceneManagement;
-using System;
+using System.Linq;
 
 public class SceneDuplicationScript {
-
-    [MenuItem("PDKT Build/Scene/Duplicate Scene with DXT5")]
-    public static void DuplicateSceneWithDXT1Crunch() {
+    [MenuItem("PDKT Build/Scene/Duplicate Scene (Built-in RP) with DXT5")]
+    public static void DuplicateSceneBuiltInDXT1Crunch() {
         DuplicateSceneWithCompression(TextureFormat.DXT5, "_DXT");
     }
 
-    [MenuItem("PDKT Build/Scene/Duplicate Scene with ASTC_8x8")]
-    public static void DuplicateSceneWithASTC8x8() {
+    [MenuItem("PDKT Build/Scene/Duplicate Scene (Built-in RP) with ASTC_8x8")]
+    public static void DuplicateSceneBuiltInASTC8x8() {
         DuplicateSceneWithCompression(TextureFormat.ASTC_8x8, "_ASTC");
+    }
+
+    [MenuItem("PDKT Build/Scene/Duplicate Scene (URP) with DXT5")]
+    public static void DuplicateSceneURPDXT1Crunch() {
+        DuplicateSceneWithCompressionURP(TextureFormat.DXT5, "_DXT");
+    }
+
+    [MenuItem("PDKT Build/Scene/Duplicate Scene (URP) with ASTC_8x8")]
+    public static void DuplicateSceneURPASTC8x8() {
+        DuplicateSceneWithCompressionURP(TextureFormat.ASTC_8x8, "_ASTC");
     }
 
     private static void DuplicateSceneWithCompression(TextureFormat textureFormat, string suffix) {
@@ -50,9 +59,40 @@ public class SceneDuplicationScript {
         }
     }
 
-    private static string DuplicateScene(string sourceScenePath, TextureFormat textureFormat, string suffix) {
+    private static void DuplicateSceneWithCompressionURP(TextureFormat textureFormat, string suffix) {
+        // Open a dialog to choose the target scene to duplicate
+        string sourceScenePath = EditorUtility.OpenFilePanel("Select Source Scene", "Assets", "unity");
+
+        if (string.IsNullOrEmpty(sourceScenePath)) {
+            Debug.LogError("Invalid scene path");
+            return;
+        }
+
+        // Duplicate the scene
+        string newScenePath = DuplicateSceneURP(sourceScenePath, textureFormat, suffix);
+
+        if (string.IsNullOrEmpty(newScenePath)) {
+            Debug.LogError("Failed to duplicate the scene");
+            return;
+        }
+
+        // Load the duplicated scene
+        Scene duplicatedScene = EditorSceneManager.OpenScene(newScenePath, OpenSceneMode.Single);
+
+        if (duplicatedScene.IsValid()) {
+            // Process assets in the duplicated scene
+            CheckSceneAssets(duplicatedScene, textureFormat, suffix);
+
+            // Save the duplicated scene
+            EditorSceneManager.SaveScene(duplicatedScene);
+        } else {
+            Debug.LogError("Failed to load duplicated scene");
+        }
+    }
+
+    private static string DuplicateSceneURP(string sourceScenePath, TextureFormat textureFormat, string suffix) {
         // Create a new scene path with the target texture format appended to the file name
-        string newScenePath = Path.GetDirectoryName(sourceScenePath) + "/" + Path.GetFileNameWithoutExtension(sourceScenePath) + suffix + ".unity";
+        string newScenePath = Path.GetDirectoryName(sourceScenePath) + "/" + Path.GetFileNameWithoutExtension(sourceScenePath) + suffix + "_URP.unity";
 
         // check if scene with the same suffix already exists
         if (File.Exists(newScenePath)) {
@@ -71,7 +111,7 @@ public class SceneDuplicationScript {
 
     private static void CheckSceneAssets(Scene scene, TextureFormat textureFormat, string suffix) {
         // Find all renderers in the scene
-        Renderer[] rootRenderers = GameObject.FindObjectsOfType<Renderer>(true);
+        Renderer[] rootRenderers = scene.GetRootGameObjects().SelectMany(go => go.GetComponentsInChildren<Renderer>(true)).ToArray();
 
         foreach (Renderer rootRenderer in rootRenderers) {
             // Process materials, textures, or any other assets in the GameObject and its descendants
@@ -97,51 +137,66 @@ public class SceneDuplicationScript {
         }
     }
 
-
-
-    private static void ProcessAssetsInGameObject(GameObject gameObject, TextureFormat textureFormat, string suffix) {
-        // Iterate through all components of the GameObject
-        Component[] components = gameObject.GetComponents<Component>();
-
-        foreach (Component component in components) {
-            // Process materials, textures, or any other assets as needed
-            ProcessAssetsInComponent(component, textureFormat, suffix);
-        }
-    }
-
-    private static void ProcessAssetsInComponent(Component component, TextureFormat textureFormat, string suffix) {
-        // Process materials, textures, or any other assets as needed
-        if (component is Renderer renderer) {
-            ProcessMaterials(renderer, renderer.sharedMaterials, textureFormat, suffix);
-        }
-    }
-
     private static void ProcessMaterials(Renderer renderer, Material[] materials, TextureFormat textureFormat, string suffix) {
         List<Material> duplicatedMaterials = new List<Material>();
 
         foreach (Material originalMaterial in materials) {
             if (originalMaterial != null) {
-                Material duplicatedMaterial = DuplicateMaterial(originalMaterial, textureFormat, suffix);
-                duplicatedMaterials.Add(duplicatedMaterial);
+                string originalMaterialName = originalMaterial.name;
 
-                var textures = duplicatedMaterial.GetTexturePropertyNames();
+                // Check if the original material name contains "_DXT" or "_ASTC"
+                if (originalMaterialName.Contains("_DXT") || originalMaterialName.Contains("_ASTC")) {
+                    // Do not apply the new suffix if it already contains "_DXT" or "_ASTC"
+                    duplicatedMaterials.Add(originalMaterial);
+                    continue;
+                }
 
-                foreach (var textureName in textures) {
-                    Texture texture = duplicatedMaterial.GetTexture(textureName);
+                // Create a new name for the duplicated material
+                string newMaterialName = originalMaterialName + suffix;
 
-                    string newTexturePath;
-                    if (textureName.Contains("_BumpMap")) {
-                        newTexturePath = ProcessTextureEntry(texture, textureFormat, suffix, isNormalMap: true);
-                    } else {
-                        newTexturePath = ProcessTextureEntry(texture, textureFormat, suffix, isNormalMap: false);
+                // Check if the material with the same name and suffix already exists
+                Material existingMaterial = AssetDatabase.LoadAssetAtPath<Material>(Path.Combine("Assets", newMaterialName + ".mat"));
+
+                Material duplicatedMaterial = null;
+                // If the material with the same name and suffix already exists, update the existing material
+                if (existingMaterial != null && existingMaterial.name.Equals(newMaterialName)) {
+                    // Update the existing material
+                    EditorUtility.CopySerializedIfDifferent(originalMaterial, existingMaterial);
+                    duplicatedMaterials.Add(existingMaterial);
+                } else {
+                    // Create a new instance of the material (no longer using "new Material(originalMaterial)")
+                    duplicatedMaterial = UnityEngine.Object.Instantiate(originalMaterial);
+
+                    // Set the new name for the duplicated material
+                    duplicatedMaterial.name = newMaterialName;
+
+                    // Get the path of the original material
+                    string originalMaterialPath = AssetDatabase.GetAssetPath(originalMaterial);
+
+                    // Get the directory of the original material
+                    string originalMaterialDirectory = Path.GetDirectoryName(originalMaterialPath);
+
+                    // Construct the path for the duplicated material in the same folder
+                    string duplicatedMaterialPath = Path.Combine(originalMaterialDirectory, newMaterialName + ".mat");
+
+                    // Create a new asset for the duplicated material
+                    AssetDatabase.CreateAsset(duplicatedMaterial, duplicatedMaterialPath);
+                    AssetDatabase.SaveAssets();
+                    AssetDatabase.Refresh();
+
+                    duplicatedMaterials.Add(duplicatedMaterial);
+                }
+
+                // Duplicate textures and update material references
+                foreach (string textureProperty in originalMaterial.GetTexturePropertyNames()) {
+                    Texture originalTexture = originalMaterial.GetTexture(textureProperty);
+                    if (originalTexture != null) {
+                        string newTexturePath = ProcessTextureEntry(originalTexture, textureFormat, suffix);
+                        if (!string.IsNullOrEmpty(newTexturePath)) {
+                            Texture newTexture = AssetDatabase.LoadAssetAtPath<Texture>(newTexturePath);
+                            duplicatedMaterial.SetTexture(textureProperty, newTexture);
+                        }
                     }
-
-                    if (string.IsNullOrEmpty(newTexturePath)) {
-                        continue;
-                    }
-
-                    var newTexture = AssetDatabase.LoadAssetAtPath<Texture>(newTexturePath);
-                    duplicatedMaterial.SetTexture(textureName, newTexture);
                 }
             }
         }
@@ -150,53 +205,26 @@ public class SceneDuplicationScript {
         renderer.sharedMaterials = duplicatedMaterials.ToArray();
     }
 
+    private static string DuplicateScene(string sourceScenePath, TextureFormat textureFormat, string suffix) {
+        // Create a new scene path with the target texture format appended to the file name
+        string newScenePath = Path.GetDirectoryName(sourceScenePath) + "/" + Path.GetFileNameWithoutExtension(sourceScenePath) + suffix + ".unity";
 
-
-    private static Material DuplicateMaterial(Material originalMaterial, TextureFormat textureFormat, string suffix) {
-        // check if original material contains suffix
-        if (originalMaterial.name.Contains(suffix)) {
-            return originalMaterial;
+        // check if scene with the same suffix already exists
+        if (File.Exists(newScenePath)) {
+            return newScenePath;
         }
 
-        // Create a new name for the duplicated material
-        string newMaterialName = originalMaterial.name + suffix;
-
-        // Check if material with the same name already exists
-        Material existingMaterial = AssetDatabase.LoadAssetAtPath<Material>(Path.Combine("Assets", newMaterialName + ".mat"));
-
-        // If the material with the same name already exists, update the existing material
-        if (existingMaterial != null && existingMaterial.name.Equals(newMaterialName)) {
-            // Update the existing material
-            EditorUtility.CopySerializedIfDifferent(originalMaterial, existingMaterial);
-            AssetDatabase.SaveAssets();
+        // Duplicate the scene
+        if (EditorSceneManager.SaveScene(EditorSceneManager.GetActiveScene(), newScenePath)) {
+            // Refresh the asset database
             AssetDatabase.Refresh();
-            return existingMaterial;
+            return newScenePath;
         }
 
-        // Create a new instance of the material (no longer using "new Material(originalMaterial)")
-        Material duplicatedMaterial = UnityEngine.Object.Instantiate(originalMaterial);
-
-        // Set the new name for the duplicated material
-        duplicatedMaterial.name = newMaterialName;
-
-        // Get the path of the original material
-        string originalMaterialPath = AssetDatabase.GetAssetPath(originalMaterial);
-
-        // Get the directory of the original material
-        string originalMaterialDirectory = Path.GetDirectoryName(originalMaterialPath);
-
-        // Construct the path for the duplicated material in the same folder
-        string duplicatedMaterialPath = Path.Combine(originalMaterialDirectory, newMaterialName + ".mat");
-
-        // Create a new asset for the duplicated material
-        AssetDatabase.CreateAsset(duplicatedMaterial, duplicatedMaterialPath);
-        AssetDatabase.SaveAssets();
-        AssetDatabase.Refresh();
-
-        return duplicatedMaterial;
+        return null;
     }
 
-    private static string ProcessTextureEntry(Texture texture, TextureFormat textureFormat, string suffix, bool isNormalMap = false) {
+    private static string ProcessTextureEntry(Texture texture, TextureFormat textureFormat, string suffix) {
         if (texture == null) {
             return null;
         }
@@ -231,12 +259,6 @@ public class SceneDuplicationScript {
         TextureImporter importer = AssetImporter.GetAtPath(newPath) as TextureImporter;
 
         if (importer != null) {
-            if (isNormalMap) {
-                importer.textureType = TextureImporterType.NormalMap;
-            } else {
-                importer.textureType = TextureImporterType.Default;
-            }
-
             importer.textureCompression = TextureImporterCompression.Compressed;
             var platformSettings = importer.GetPlatformTextureSettings("WebGL");
             platformSettings.overridden = true;
@@ -250,6 +272,5 @@ public class SceneDuplicationScript {
 
         return newPath;
     }
-
 }
 #endif
